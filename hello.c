@@ -50,11 +50,13 @@ void display(void)
  * (0.25, 0.25, 0.0) and (0.75, 0.75, 0.0)  
  */
    glColor3f (1.0, 1.0, 1.0);
-   glBegin(GL_POLYGON);
-      glVertex3f (0.25, 0.25, 0.0);
-      glVertex3f (0.75, 0.25, 0.0);
-      glVertex3f (0.75, 0.75, 0.0);
-      glVertex3f (0.25, 0.75, 0.0);
+   glBegin(GL_LINE_LOOP);
+      glVertex2f(0.3, 0.3);
+      glVertex2f(0.7, 0.3);
+      glVertex2f(0.8, 0.5);
+      glVertex2f(0.7, 0.7);
+      glVertex2f(0.3, 0.7);
+      glVertex2f(0.2, 0.5);
    glEnd();
 
 /* don't wait!  

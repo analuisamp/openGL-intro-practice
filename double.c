@@ -48,14 +48,14 @@ static GLfloat spin = 0.0;
 
 void display(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT);
+   //glClear(GL_COLOR_BUFFER_BIT);
    glPushMatrix();
    glRotatef(spin, 0.0, 0.0, 1.0);
-   glColor3f(1.0, 1.0, 1.0);
+   glColor3f(1.0, 1.0, 0.0);
    glRectf(-25.0, -25.0, 25.0, 25.0);
    glPopMatrix();
 
-   glutSwapBuffers();
+   glFlush();
 }
 
 void spinDisplay(void)
@@ -82,6 +82,14 @@ void reshape(int w, int h)
    glLoadIdentity();
 }
 
+void spinDisplayReverse(void)
+{
+   spin = spin - 2.0;
+   if (spin < 0.0)
+      spin += 360.0;
+   glutPostRedisplay();
+}
+   
 void mouse(int button, int state, int x, int y) 
 {
    switch (button) {
@@ -92,13 +100,13 @@ void mouse(int button, int state, int x, int y)
       case GLUT_MIDDLE_BUTTON:
       case GLUT_RIGHT_BUTTON:
          if (state == GLUT_DOWN)
-            glutIdleFunc(NULL);
+            glutIdleFunc(spinDisplayReverse); 
          break;
       default:
          break;
    }
 }
-   
+
 /* 
  *  Request double buffer display mode.
  *  Register mouse input callback functions
@@ -106,7 +114,7 @@ void mouse(int button, int state, int x, int y)
 int main(int argc, char** argv)
 {
    glutInit(&argc, argv);
-   glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
+   glutInitDisplayMode (GLUT_SINGLE| GLUT_RGB);
    glutInitWindowSize (250, 250); 
    glutInitWindowPosition (100, 100);
    glutCreateWindow (argv[0]);
