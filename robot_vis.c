@@ -36,109 +36,105 @@
  */
 
 /*
- *  movelight.c
- *  This program demonstrates when to issue lighting and
- *  transformation commands to render a model with a light
- *  which is moved by a modeling transformation (rotate or
- *  translate).  The light position is reset after the modeling
- *  transformation is called.  The eye position does not change.
- *
- *  A sphere is drawn using a grey material characteristic.
- *  A single light source illuminates the object.
- *
- *  Interaction:  pressing the left mouse button alters
- *  the modeling transformation (x rotation) by 30 degrees.
- *  The scene is then redrawn with the light in a new position.
+ * robot.c
+ * This program shows how to composite modeling transformations
+ * to draw translated and rotated hierarchical models.
+ * Interaction:  pressing the s and e keys (shoulder and elbow)
+ * alters the rotation of the robot arm.
  */
 #include <GL/glut.h>
 #include <stdlib.h>
-#include <math.h>
 
-static int spin = 0;
+static int shoulder = 0, elbow = 0;
 
 void init(void) 
 {
    glClearColor(0.0, 0.0, 0.0, 0.0);
    glShadeModel(GL_SMOOTH);
-   glEnable(GL_LIGHTING);
-   glEnable(GL_LIGHT0);
    glEnable(GL_DEPTH_TEST);
+
 }
 
 void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glLoadIdentity();
+   gluLookAt(0.0, 2.0, 4.0,
+             0.0, 0.0, 0.0, 
+             0.0, 1.0, 0.0); 
 
    glPushMatrix();
-   gluLookAt(0.0, 0.0, 5.0,   // olho
-             0.0, 0.0, 0.0,   // centro
-             0.0, 1.0, 0.0);  // cima
 
-   // Translação da luz
+   glTranslatef(-1.0, 0.0, 0.0);
+   glRotatef((GLfloat) shoulder, 0.0, 0.0, 1.0);
+   glTranslatef(1.0, 0.0, 0.0);
+   glColor3f(1.0, 0.0, 0.0);
    glPushMatrix();
-   GLdouble translation = sin((GLdouble)spin * 3.14 / 180.0);
-   glTranslated(0.0, 0.0, translation);
-
-   // Posição da luz após transformação
-   GLfloat light_pos[] = { 0.0, 0.0, 0.0, 1.0 };
-   glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-
-   // Cubo representando a posição da luz
-   glTranslated(0.0, 0.0, 1.5);
-   glDisable(GL_LIGHTING);
-   glColor3f(0.0, 1.0, 1.0);
-   glutWireCube(0.1);
-   glEnable(GL_LIGHTING);
+   glScalef(2.0, 0.4, 1.0);
+   glutSolidCube(1.0);
    glPopMatrix();
 
-   // Primeiro toroide
-   glutSolidTorus(0.275, 0.85, 8, 15);
-
-   // Segundo toroide atrás
+   glTranslatef(0.8, 0.0, 0.0);
+   glRotatef((GLfloat) elbow, 0.0, 1.0, 0.0);
+   glTranslatef(1.0, 0.0, 0.0);
+   glColor3f(0.0, 0.0, 1.0);
    glPushMatrix();
-   glTranslated(0.0, 0.0, -3.0);
-   glutSolidTorus(0.275, 0.85, 8, 15);
+   glScalef(2.0, 0.4, 1.0);
+   glutSolidCube(1.0);
    glPopMatrix();
 
    glPopMatrix();
-   glFlush();
+   glutSwapBuffers();
 }
 
-void reshape(int w, int h)
+void reshape (int w, int h)
 {
-   glViewport(0, 0, (GLsizei)w, (GLsizei)h);
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   gluPerspective(40.0, (GLfloat)w / (GLfloat)h, 1.0, 20.0);
+   glViewport (0, 0, (GLsizei) w, (GLsizei) h); 
+   glMatrixMode (GL_PROJECTION);
+   glLoadIdentity ();
+   gluPerspective(65.0, (GLfloat) w/(GLfloat) h, 2.0, 15.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-}
-
-void mouse(int button, int state, int x, int y)
-{
-   if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-      spin = (spin + 30) % 360;
-      glutPostRedisplay();
-   }
+   glTranslatef (0.0, 0.0, -5.0);
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
-   if (key == 27)
-      exit(0);
+   switch (key) {
+      case 's':
+         shoulder = (shoulder + 5) % 360;
+         elbow = (elbow + 5) % 360;
+         glutPostRedisplay();
+         break;
+      case 'S': 
+         shoulder = (shoulder - 5) % 360;
+         elbow = (elbow - 5) % 360;
+         glutPostRedisplay();
+         break;
+      case 'e':
+         elbow = (elbow + 5) % 360;
+         glutPostRedisplay();
+         break;
+      case 'E':
+         elbow = (elbow - 5) % 360;
+         glutPostRedisplay();
+         break;
+      case 27:
+         exit(0);
+         break;
+   }
 }
 
 int main(int argc, char** argv)
 {
    glutInit(&argc, argv);
-   glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
-   glutInitWindowSize(500, 500);
-   glutInitWindowPosition(100, 100);
-   glutCreateWindow("movelight");
-   init();
-   glutDisplayFunc(display);
+   glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+   glutInitWindowSize (500, 500); 
+   glutInitWindowPosition (100, 100);
+   glutCreateWindow (argv[0]);
+   init ();
+   glutDisplayFunc(display); 
    glutReshapeFunc(reshape);
-   glutMouseFunc(mouse);
    glutKeyboardFunc(keyboard);
    glutMainLoop();
    return 0;

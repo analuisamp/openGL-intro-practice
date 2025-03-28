@@ -36,109 +36,102 @@
  */
 
 /*
- *  movelight.c
- *  This program demonstrates when to issue lighting and
- *  transformation commands to render a model with a light
- *  which is moved by a modeling transformation (rotate or
- *  translate).  The light position is reset after the modeling
- *  transformation is called.  The eye position does not change.
- *
- *  A sphere is drawn using a grey material characteristic.
+ *  light.c
+ *  This program demonstrates the use of the OpenGL lighting
+ *  model.  A sphere is drawn using a grey material characteristic.
  *  A single light source illuminates the object.
- *
- *  Interaction:  pressing the left mouse button alters
- *  the modeling transformation (x rotation) by 30 degrees.
- *  The scene is then redrawn with the light in a new position.
  */
 #include <GL/glut.h>
 #include <stdlib.h>
-#include <math.h>
 
-static int spin = 0;
-
+/*  Initialize material property, light source, lighting model,
+ *  and depth buffer.
+ */
 void init(void) 
 {
-   glClearColor(0.0, 0.0, 0.0, 0.0);
-   glShadeModel(GL_SMOOTH);
+   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+   GLfloat mat_shininess[] = { 50.0 };
+   GLfloat light_position[] = { 1.0, 1.0, 1.0, 1.0 };
+
+   glClearColor (0.0, 0.0, 0.0, 0.0);
+   glShadeModel(GL_FLAT);
+
+   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+   glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
    glEnable(GL_LIGHTING);
    glEnable(GL_LIGHT0);
    glEnable(GL_DEPTH_TEST);
+
+   GLfloat light_ambient[] = { 0.2, 0.0, 0.0, 1.0 };
+   GLfloat light_diffuse[] = { 1.0, 0.0, 0.0, 1.0 };
+   GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+
+   glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+   glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+   glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+
+   GLfloat light1_ambient[] = { 0.0, 0.2, 0.0, 1.0 };
+   GLfloat light1_diffuse[] = { 0.0, 1.0, 0.0, 1.0 };
+   GLfloat light1_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+   GLfloat light1_position[] = { -2.0, 2.0, 1.0, 1.0 };
+   GLfloat spot_direction[] = { 1.0, -1.0, 0.0 };
+
+   glLightfv(GL_LIGHT1, GL_AMBIENT, light1_ambient);
+   glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
+   glLightfv(GL_LIGHT1, GL_SPECULAR, light1_specular);
+   glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
+   glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spot_direction);
+   glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 45.0);
+   glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 2.0);
+   glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.0);
+   glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.5);
+   glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.2);
+   glEnable(GL_LIGHT1);
 }
 
 void display(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-   glPushMatrix();
-   gluLookAt(0.0, 0.0, 5.0,   // olho
-             0.0, 0.0, 0.0,   // centro
-             0.0, 1.0, 0.0);  // cima
-
-   // Translação da luz
-   glPushMatrix();
-   GLdouble translation = sin((GLdouble)spin * 3.14 / 180.0);
-   glTranslated(0.0, 0.0, translation);
-
-   // Posição da luz após transformação
-   GLfloat light_pos[] = { 0.0, 0.0, 0.0, 1.0 };
-   glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-
-   // Cubo representando a posição da luz
-   glTranslated(0.0, 0.0, 1.5);
-   glDisable(GL_LIGHTING);
-   glColor3f(0.0, 1.0, 1.0);
-   glutWireCube(0.1);
-   glEnable(GL_LIGHTING);
-   glPopMatrix();
-
-   // Primeiro toroide
-   glutSolidTorus(0.275, 0.85, 8, 15);
-
-   // Segundo toroide atrás
-   glPushMatrix();
-   glTranslated(0.0, 0.0, -3.0);
-   glutSolidTorus(0.275, 0.85, 8, 15);
-   glPopMatrix();
-
-   glPopMatrix();
-   glFlush();
+   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glutSolidSphere (1.0, 20, 16);
+   glFlush ();
 }
 
-void reshape(int w, int h)
+void reshape (int w, int h)
 {
-   glViewport(0, 0, (GLsizei)w, (GLsizei)h);
-   glMatrixMode(GL_PROJECTION);
+   glViewport (0, 0, (GLsizei) w, (GLsizei) h);
+   glMatrixMode (GL_PROJECTION);
    glLoadIdentity();
-   gluPerspective(40.0, (GLfloat)w / (GLfloat)h, 1.0, 20.0);
+   if (w <= h)
+      glOrtho (-1.5, 1.5, -1.5*(GLfloat)h/(GLfloat)w,
+         1.5*(GLfloat)h/(GLfloat)w, -10.0, 10.0);
+   else
+      glOrtho (-1.5*(GLfloat)w/(GLfloat)h,
+         1.5*(GLfloat)w/(GLfloat)h, -1.5, 1.5, -10.0, 10.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 }
 
-void mouse(int button, int state, int x, int y)
-{
-   if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-      spin = (spin + 30) % 360;
-      glutPostRedisplay();
-   }
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
-   if (key == 27)
-      exit(0);
+   switch (key) {
+      case 27:
+         exit(0);
+         break;
+   }
 }
 
 int main(int argc, char** argv)
 {
    glutInit(&argc, argv);
-   glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
-   glutInitWindowSize(500, 500);
-   glutInitWindowPosition(100, 100);
-   glutCreateWindow("movelight");
-   init();
-   glutDisplayFunc(display);
+   glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
+   glutInitWindowSize (500, 500); 
+   glutInitWindowPosition (100, 100);
+   glutCreateWindow (argv[0]);
+   init ();
+   glutDisplayFunc(display); 
    glutReshapeFunc(reshape);
-   glutMouseFunc(mouse);
    glutKeyboardFunc(keyboard);
    glutMainLoop();
    return 0;

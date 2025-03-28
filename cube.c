@@ -44,22 +44,55 @@
 #include <GL/glut.h>
 #include <stdlib.h>
 
+float posicaoAzul = 0.0;
+int inverter = 0;
+
 void init(void) 
 {
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel (GL_FLAT);
+   glEnable(GL_DEPTH_TEST);
 }
 
 void display(void)
 {
-   glClear (GL_COLOR_BUFFER_BIT);
-   glColor3f (1.0, 1.0, 1.0);
-   glLoadIdentity ();             /* clear the matrix */
-           /* viewing transformation  */
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glLoadIdentity();
    gluLookAt (0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-   glScalef (1.0, 2.0, 1.0);      /* modeling transformation */ 
-   glutWireCube (1.0);
-   glFlush ();
+
+   if (inverter == 0){
+      // Cubo vermelho maior
+      glPushMatrix();
+         glColor3f (1.0, 0.0, 0.0); // Vermelho
+         glScalef (1.0, 1.0, 1.0);
+         glutSolidCube (1.0); // Tamanho 1.0
+      glPopMatrix();
+
+      // Cubo azul menor e mais distante
+      glPushMatrix();
+         glColor3f (0.0, 0.0, 1.0); // Azul
+         glTranslatef(posicaoAzul + 0.4, 0.0, -1.0); // Ajuste para ficar atrás e mais à direita
+         glScalef (1.0, 1.0, 1.0);
+         glutSolidCube (0.5); // Tamanho menor: 0.5
+      glPopMatrix();
+   } else {
+      // Cubo azul primeiro
+      glPushMatrix();
+         glColor3f (0.0, 0.0, 1.0); // Azul
+         glTranslatef(posicaoAzul + 0.4, 0.0, -1.0);
+         glScalef (1.0, 1.0, 1.0);
+         glutSolidCube (0.5);
+      glPopMatrix();
+
+      // Cubo vermelho depois
+      glPushMatrix();
+         glColor3f (1.0, 0.0, 0.0); // Vermelho
+         glScalef (1.0, 1.0, 1.0);
+         glutSolidCube (1.0);
+      glPopMatrix();
+   }
+
+   glutSwapBuffers(); // Substitui glFlush()
 }
 
 void reshape (int w, int h)
@@ -74,6 +107,21 @@ void reshape (int w, int h)
 void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
+      case 's':
+         posicaoAzul += 0.1;
+         glutPostRedisplay();
+         break;
+
+      case 'S':
+         posicaoAzul -= 0.1;
+         glutPostRedisplay();
+         break;
+
+      case 'i':
+         inverter = !inverter;
+         glutPostRedisplay();
+         break;
+
       case 27:
          exit(0);
          break;
