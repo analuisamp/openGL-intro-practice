@@ -42,9 +42,6 @@
  *  If running this program on OpenGL 1.0, texture objects are
  *  not used.
  */
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -54,40 +51,9 @@
 #define	checkImageHeight 64
 static GLubyte checkImage[checkImageHeight][checkImageWidth][4];
 
-
 #ifdef GL_VERSION_1_1
 static GLuint texName;
 #endif
-
-void loadTexture ( const char * filename ) {
-   int width , height , nrChannels ;
-   unsigned char * data = stbi_load ( filename , & width , & height ,
-   & nrChannels , 0);
-   if ( data ) {
-      static GLuint texture;
-      glBindTexture ( GL_TEXTURE_2D , texture );
-      // Set texture wrapping and filtering parameters
-      glTexParameteri ( GL_TEXTURE_2D , GL_TEXTURE_WRAP_S ,
-      GL_REPEAT );
-      glTexParameteri ( GL_TEXTURE_2D , GL_TEXTURE_WRAP_T ,
-      GL_REPEAT );
-      glTexParameteri ( GL_TEXTURE_2D , GL_TEXTURE_MIN_FILTER ,
-      GL_LINEAR_MIPMAP_LINEAR );
-      glTexParameteri ( GL_TEXTURE_2D , GL_TEXTURE_MAG_FILTER ,
-      GL_LINEAR );
-      // Load the texture data ( check if it 's RGB or RGBA )
-      if ( nrChannels == 3) {
-         gluBuild2DMipmaps ( GL_TEXTURE_2D , GL_RGB , width ,
-         height , GL_RGB , GL_UNSIGNED_BYTE , data );
-      } else if ( nrChannels == 4) {
-         gluBuild2DMipmaps ( GL_TEXTURE_2D , GL_RGBA , width ,
-         height , GL_RGBA , GL_UNSIGNED_BYTE , data );
-         }
-         stbi_image_free ( data );
-      } else {
-         fprintf(stderr, "Failed to load texture: %s\n", filename);
-     }  
-   }
 
 void makeCheckImage(void)
 {
@@ -104,33 +70,53 @@ void makeCheckImage(void)
    }
 }
 
+
+
+
 void init(void)
-{    
+{
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel(GL_FLAT);
    glEnable(GL_DEPTH_TEST);
+
+   makeCheckImage();
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+#ifdef GL_VERSION_1_1
+   glGenTextures(1, &texName);
+   glBindTexture(GL_TEXTURE_2D, texName);
+#endif
+
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+   #ifdef GL_VERSION_1_1
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, checkImageWidth, checkImageHeight, 
+                0, GL_RGBA, GL_UNSIGNED_BYTE, checkImage);
+#else
+   glTexImage2D(GL_TEXTURE_2D, 0, 4, checkImageWidth, checkImageHeight, 
+                0, GL_RGBA, GL_UNSIGNED_BYTE, checkImage);
+#endif
 }
 
 void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-   loadTexture("texture_image.jpeg");
-
-   /* Ao desenhar, podemos pintar o objeto de vermelho: */
-   glColor3f(1.0f, 0.0f, 0.0f);
-
    glEnable(GL_TEXTURE_2D);
-   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-   glColor3f(1.0f, 0.0f, 0.0f);
+   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 #ifdef GL_VERSION_1_1
    glBindTexture(GL_TEXTURE_2D, texName);
 #endif
 
-   GLUquadric* quad = gluNewQuadric();
-   gluQuadricTexture(quad, GL_TRUE);
-   gluSphere(quad, 1.0, 32, 32);
-   gluDeleteQuadric(quad);
+   glBegin(GL_QUADS);
+      glTexCoord2f(0.0f, 0.0f);   glVertex3f(-2.0f, -1.0f,  0.0f);
+      glTexCoord2f(0.0f, 1.0f);   glVertex3f(-2.0f, -1.0f, -8.0f);
+      glTexCoord2f(1.0f, 1.0f);   glVertex3f( 2.0f, -1.0f, -8.0f);
+      glTexCoord2f(1.0f, 0.0f);   glVertex3f( 2.0f, -1.0f,  0.0f);
+   glEnd();
    glFlush();
    glDisable(GL_TEXTURE_2D);
 }
@@ -140,10 +126,11 @@ void reshape(int w, int h)
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   gluPerspective(60.0, (GLfloat) w/(GLfloat) h, 1.0, 30.0);
+   gluPerspective(60.0, (GLfloat)w/(GLfloat)h, 1.0, 30.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-   glTranslatef(0.0, 0.0, -3.6);
+   glTranslatef(0.0f, 0.0f, -1.0f);  /* recua a câmera */
+   glRotatef(30.0f, 1.0f, 0.0f, 0.0f); /* inclina 30 graus para baixo */
 }
 
 void keyboard (unsigned char key, int x, int y)
@@ -156,12 +143,11 @@ void keyboard (unsigned char key, int x, int y)
          break;
    }
 }
-
 int main(int argc, char** argv)
 {
    glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
-   glutInitWindowSize(250, 250);
+   glutInitWindowSize(500, 500);
    glutInitWindowPosition(100, 100);
    glutCreateWindow(argv[0]);
    init();
@@ -169,5 +155,5 @@ int main(int argc, char** argv)
    glutReshapeFunc(reshape);
    glutKeyboardFunc(keyboard);
    glutMainLoop();
-   return 0; 
+   return 0;
 }
